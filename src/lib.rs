@@ -335,6 +335,13 @@ impl MmapOptions {
     /// # Ok(())
     /// # }
     /// ```
+    /// # Safety
+    ///
+    /// All file-backed memory map constructors are marked `unsafe` because of the potential for
+    /// *Undefined Behavior* (UB) using the map if the underlying file is subsequently modified, in or
+    /// out of process. Applications must consider the risk and take appropriate precautions when
+    /// using file-backed maps. Solutions such as file permissions, locks or process-private (e.g.
+    /// unlinked) files exist but are platform specific and limited
     pub unsafe fn map<T: MmapAsRawDesc>(&self, file: T) -> Result<Mmap> {
         let desc = file.as_raw_desc();
 
@@ -348,6 +355,14 @@ impl MmapOptions {
     ///
     /// This method returns an error when the underlying system call fails, which can happen for a
     /// variety of reasons, such as when the file is not open with read permissions.
+    ///
+    /// # Safety
+    ///
+    /// All file-backed memory map constructors are marked `unsafe` because of the potential for
+    /// *Undefined Behavior* (UB) using the map if the underlying file is subsequently modified, in or
+    /// out of process. Applications must consider the risk and take appropriate precautions when
+    /// using file-backed maps. Solutions such as file permissions, locks or process-private (e.g.
+    /// unlinked) files exist but are platform specific and limited
     pub unsafe fn map_exec<T: MmapAsRawDesc>(&self, file: T) -> Result<Mmap> {
         let desc = file.as_raw_desc();
 
@@ -388,6 +403,13 @@ impl MmapOptions {
     /// # Ok(())
     /// # }
     /// ```
+    /// # Safety
+    ///
+    /// All file-backed memory map constructors are marked `unsafe` because of the potential for
+    /// *Undefined Behavior* (UB) using the map if the underlying file is subsequently modified, in or
+    /// out of process. Applications must consider the risk and take appropriate precautions when
+    /// using file-backed maps. Solutions such as file permissions, locks or process-private (e.g.
+    /// unlinked) files exist but are platform specific and limited
     pub unsafe fn map_mut<T: MmapAsRawDesc>(&self, file: T) -> Result<MmapMut> {
         let desc = file.as_raw_desc();
 
@@ -419,6 +441,13 @@ impl MmapOptions {
     /// # Ok(())
     /// # }
     /// ```
+    /// # Safety
+    ///
+    /// All file-backed memory map constructors are marked `unsafe` because of the potential for
+    /// *Undefined Behavior* (UB) using the map if the underlying file is subsequently modified, in or
+    /// out of process. Applications must consider the risk and take appropriate precautions when
+    /// using file-backed maps. Solutions such as file permissions, locks or process-private (e.g.
+    /// unlinked) files exist but are platform specific and limited
     pub unsafe fn map_copy<T: MmapAsRawDesc>(&self, file: T) -> Result<MmapMut> {
         let desc = file.as_raw_desc();
 
@@ -454,6 +483,13 @@ impl MmapOptions {
     /// # Ok(())
     /// # }
     /// ```
+    /// # Safety
+    ///
+    /// All file-backed memory map constructors are marked `unsafe` because of the potential for
+    /// *Undefined Behavior* (UB) using the map if the underlying file is subsequently modified, in or
+    /// out of process. Applications must consider the risk and take appropriate precautions when
+    /// using file-backed maps. Solutions such as file permissions, locks or process-private (e.g.
+    /// unlinked) files exist but are platform specific and limited
     pub unsafe fn map_copy_read_only<T: MmapAsRawDesc>(&self, file: T) -> Result<Mmap> {
         let desc = file.as_raw_desc();
 
@@ -591,6 +627,13 @@ impl Mmap {
     /// # Ok(())
     /// # }
     /// ```
+    /// # Safety
+    ///
+    /// All file-backed memory map constructors are marked `unsafe` because of the potential for
+    /// *Undefined Behavior* (UB) using the map if the underlying file is subsequently modified, in or
+    /// out of process. Applications must consider the risk and take appropriate precautions when
+    /// using file-backed maps. Solutions such as file permissions, locks or process-private (e.g.
+    /// unlinked) files exist but are platform specific and limited
     pub unsafe fn map<T: MmapAsRawDesc>(file: T) -> Result<Mmap> {
         MmapOptions::new().map(file)
     }
@@ -743,6 +786,12 @@ impl MmapRaw {
     #[inline]
     pub fn as_mut_ptr(&self) -> *mut u8 {
         self.inner.ptr() as _
+    }
+
+    /// Returns true if the memory map is empty, false if not
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.inner.len() == 0
     }
 
     /// Returns the length in bytes of the memory map.
@@ -955,6 +1004,13 @@ impl MmapMut {
     /// # Ok(())
     /// # }
     /// ```
+    /// # Safety
+    /// 
+    /// All file-backed memory map constructors are marked `unsafe` because of the potential for
+    /// *Undefined Behavior* (UB) using the map if the underlying file is subsequently modified, in or
+    /// out of process. Applications must consider the risk and take appropriate precautions when
+    /// using file-backed maps. Solutions such as file permissions, locks or process-private (e.g.
+    /// unlinked) files exist but are platform specific and limited
     pub unsafe fn map_mut<T: MmapAsRawDesc>(file: T) -> Result<MmapMut> {
         MmapOptions::new().map_mut(file)
     }
@@ -1203,7 +1259,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
 
         file.set_len(expected_len as u64).unwrap();
@@ -1236,7 +1292,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
 
         file.set_len(expected_len as u64).unwrap();
@@ -1268,7 +1324,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
         let mmap = unsafe { Mmap::map(&file).unwrap() };
         assert!(mmap.is_empty());
@@ -1321,7 +1377,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
         file.set_len(128).unwrap();
 
@@ -1345,7 +1401,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
         file.set_len(128).unwrap();
         let write = b"abc123";
@@ -1371,7 +1427,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
         file.set_len(128).unwrap();
 
@@ -1407,7 +1463,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
         file.set_len(128).unwrap();
 
@@ -1432,7 +1488,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
 
         let offset = u32::max_value() as u64 + 2;
@@ -1519,7 +1575,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&tempdir.path().join("jit_x86"))
+            .open(tempdir.path().join("jit_x86"))
             .expect("open");
 
         file.set_len(4096).expect("set_len");
@@ -1539,7 +1595,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .expect("open");
         file.set_len(256_u64).expect("set_len");
 
@@ -1585,7 +1641,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .expect("open");
         file.set_len(256_u64).expect("set_len");
 
@@ -1639,7 +1695,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .expect("open");
         file.write_all(b"abc123").unwrap();
         let mmap = MmapOptions::new().map_raw(&file).unwrap();
@@ -1693,7 +1749,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
 
         file.set_len(expected_len as u64).unwrap();
@@ -1755,7 +1811,7 @@ mod test {
             .read(true)
             .write(true)
             .create(true)
-            .open(&path)
+            .open(path)
             .unwrap();
         file.set_len(128).unwrap();
 
